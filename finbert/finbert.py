@@ -597,7 +597,7 @@ def predict(text, model, write_to_csv=False, path=None):
 
     label_list = ['positive', 'negative', 'neutral']
     label_dict = {0: 'positive', 1: 'negative', 2: 'neutral'}
-    result = pd.DataFrame(columns=['sentence', 'logit', 'prediction', 'sentiment_score'])
+    result = pd.DataFrame(columns=['sentence', 'prediction', 'sentiment_score'])
     for batch in chunks(sentences, 5):
         examples = [InputExample(str(i), sentence) for i, sentence in enumerate(batch)]
 
@@ -611,13 +611,12 @@ def predict(text, model, write_to_csv=False, path=None):
             logits = model(all_input_ids, all_attention_mask, all_token_type_ids)[0]
             logging.info(logits)
             logits = softmax(np.array(logits))
-            sentiment_score = pd.Series(logits[:, 0] - logits[:, 1])
-            predictions = np.squeeze(np.argmax(logits, axis=1))
+            # sentiment_score = pd.Series(logits[:, 0] - logits[:, 1])
+            predictions = np.squeeze(np.argmax(logits, axis=0))
 
             batch_result = {'sentence': batch,
-                            'logit': list(logits),
                             'prediction': predictions,
-                            'sentiment_score': sentiment_score}
+                            'sentiment_score': np.max(logits)}
 
             batch_result = pd.DataFrame(batch_result)
             result = pd.concat([result, batch_result], ignore_index=True)
